@@ -1,0 +1,2 @@
+"""Desktop Pet interaction API."""
+

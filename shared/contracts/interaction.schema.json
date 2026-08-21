@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://desktop-pet.local/contracts/interaction.schema.json",
+  "title": "Desktop Pet interaction contract",
+  "$defs": {
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event", "pet_id", "client_id", "locale", "app_version"],
+      "properties": {
+        "event": { "enum": ["hover_enter", "manual_click"] },
+        "pet_id": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "client_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "locale": { "type": "string", "minLength": 2, "maxLength": 32 },
+        "app_version": { "type": "string", "minLength": 1, "maxLength": 32 }
+      }
+    },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["message", "emotion", "animation", "display_ms", "cooldown_ms", "request_id"],
+      "properties": {
+        "message": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "emotion": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "animation": { "enum": ["bounce", "nod", "wave"] },
+        "display_ms": { "type": "integer", "minimum": 1000, "maximum": 30000 },
+        "cooldown_ms": { "type": "integer", "minimum": 1000, "maximum": 300000 },
+        "request_id": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
