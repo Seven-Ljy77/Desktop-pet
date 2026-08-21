@@ -69,6 +69,41 @@ VITE_MANUAL_CLICK_COOLDOWN_MS=1200
 The accepted range is 0–60000 ms. Restart or rebuild the desktop client after
 changing it.
 
+### Replace the character artwork
+
+The character image currently used at runtime is:
+
+```text
+image/0.png
+```
+
+During development, replace this file directly with a new transparent PNG. No
+code change is needed when the filename and path stay the same. When running
+`npm run dev:desktop`, Vite watches the artwork and normally hot-reloads the
+change. If it does not refresh immediately, save the image again, wait a few
+seconds, or restart the development command.
+
+The rendered image width is controlled by `.pet-image` in
+`apps/desktop/src/styles.css`:
+
+```css
+.pet-image {
+  width: 354px;
+}
+```
+
+If you use a different filename, update the image import in
+`apps/desktop/src/main.ts` as well:
+
+```ts
+import petImageUrl from "@pet-image/pet-new.png";
+```
+
+The artwork is a desktop-client resource, so replacing it does not require any
+FastAPI or cloud-server change. Existing `.exe`, `.app`, or `.dmg` packages do
+not update their embedded artwork automatically; rebuild and reinstall the
+desktop client after replacing the image.
+
 ## Configure a remote backend
 
 During local development the client uses FastAPI at

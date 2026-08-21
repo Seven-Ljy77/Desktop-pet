@@ -62,6 +62,35 @@ VITE_MANUAL_CLICK_COOLDOWN_MS=1200
 
 允许范围为 0～60000 毫秒，修改后需重新启动或构建桌面端。
 
+### 更换角色图片素材
+
+当前运行时使用的角色图片是：
+
+```text
+image/0.png
+```
+
+开发时可以直接用新的透明 PNG 覆盖这个文件，不需要修改代码。运行
+`npm run dev:desktop` 时，Vite 会监测素材变化并进行热更新；如果没有立即
+刷新，可以保存图片后等待几秒，或重启开发命令。
+
+图片的显示宽度由 `apps/desktop/src/styles.css` 中的 `.pet-image` 控制：
+
+```css
+.pet-image {
+  width: 354px;
+}
+```
+
+如果改用其他文件名，需要同步修改 `apps/desktop/src/main.ts` 中的图片导入：
+
+```ts
+import petImageUrl from "@pet-image/pet-new.png";
+```
+
+图片属于桌面端资源，替换图片不需要修改 FastAPI 或云服务器。已经生成的
+`.exe`、`.app` 或 `.dmg` 不会自动更新素材；更换后需要重新构建并安装桌面端。
+
 ## 配置远程后端
 
 开发阶段默认使用本机 `http://127.0.0.1:8000` 上的 FastAPI。要让桌面宠物连接 Ubuntu 云服务器，无需在本地启动 FastAPI，也无需修改代码，只需在启动桌面端的终端中设置 `PET_SERVER_URL`。
