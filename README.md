@@ -262,6 +262,10 @@ docker compose --env-file deploy/.env -f deploy/compose.yaml restart
 
 ```bash
 docker compose --env-file deploy/.env -f deploy/compose.yaml restart api
+
+# 重新挂载 + 健康检查
+docker compose --env-file deploy/.env -f deploy/compose.yaml up -d --force-recreate api
+docker compose --env-file deploy/.env -f deploy/compose.yaml ps
 ```
 
 停止但保留容器：
