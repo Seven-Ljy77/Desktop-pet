@@ -302,6 +302,10 @@ Restart only the API:
 
 ```bash
 docker compose --env-file deploy/.env -f deploy/compose.yaml restart api
+
+# 重新挂载 + 健康检查
+docker compose --env-file deploy/.env -f deploy/compose.yaml up -d --force-recreate api
+docker compose --env-file deploy/.env -f deploy/compose.yaml ps
 ```
 
 Stop services while retaining their containers:
