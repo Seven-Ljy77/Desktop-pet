@@ -1,10 +1,16 @@
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import petImageUrl from "@pet-image/0.png";
+import deepSeekPetImageUrl from "@pet-image/ds.png";
+import rymPetImageUrl from "@pet-image/rym.png";
+import taffyPetImageUrl from "@pet-image/taffy.png";
 import {
+  getPetRole,
+  getPetScale,
   hideBubble,
   isTauri,
   requestInteraction,
+  setPetRole,
+  setPetScale,
   showBubble,
   startPetDrag,
 } from "./api";
@@ -17,6 +23,17 @@ import type {
 import "./styles.css";
 
 const APP_VERSION = "0.1.0";
+type PetRole = "deepseek" | "taffy" | "rym";
+
+const PET_IMAGE_URLS: Readonly<Record<PetRole, string>> = {
+  deepseek: deepSeekPetImageUrl,
+  taffy: taffyPetImageUrl,
+  rym: rymPetImageUrl,
+};
+
+function isPetRole(role: string): role is PetRole {
+  return role in PET_IMAGE_URLS;
+}
 const FALLBACK_RESPONSES: readonly InteractionResponse[] = [
   {
     message: "我在这里。后端暂时没有回应，但不影响我们继续玩。",
@@ -62,26 +79,38 @@ function getClientId(): string {
   return created;
 }
 
-function currentView(): "pet" | "bubble" {
+function currentView(): "pet" | "bubble" | "settings" {
   if (isTauri()) {
-    return getCurrentWindow().label === "bubble" ? "bubble" : "pet";
+    const label = getCurrentWindow().label;
+    if (label === "bubble" || label === "settings") return label;
+    return "pet";
   }
-  return new URLSearchParams(location.search).get("view") === "bubble"
-    ? "bubble"
-    : "pet";
+  const view = new URLSearchParams(location.search).get("view");
+  return view === "bubble" || view === "settings" ? view : "pet";
 }
 
 function renderPet(root: HTMLElement): void {
   document.body.dataset.view = "pet";
   root.innerHTML = `
     <section class="pet-stage" aria-label="桌面宠物">
-      <img class="pet-image" src="${petImageUrl}" alt="桌面宠物" draggable="false" />
+      <img class="pet-image" src="${PET_IMAGE_URLS.deepseek}" alt="桌面宠物" draggable="false" />
       <span class="status-dot" aria-hidden="true"></span>
     </section>
   `;
 
   const stage = root.querySelector<HTMLElement>(".pet-stage");
-  if (!stage) return;
+  const petImage = root.querySelector<HTMLImageElement>(".pet-image");
+  if (!stage || !petImage) return;
+
+  const displayPetRole = (role: string): void => {
+    if (isPetRole(role)) petImage.src = PET_IMAGE_URLS[role];
+  };
+  if (isTauri()) {
+    void getPetRole()
+      .then(displayPetRole)
+      .catch((error) => console.error("Unable to load pet role.", error));
+    void listen<string>("pet-role-changed", ({ payload }) => displayPetRole(payload));
+  }
 
   let hovering = false;
   let dwellTimer: number | undefined;
@@ -329,10 +358,106 @@ function renderBubble(root: HTMLElement): void {
   }
 }
 
+function renderSettings(root: HTMLElement): void {
+  document.body.dataset.view = "settings";
+  root.innerHTML = `
+    <main class="settings-panel">
+      <h1>设置</h1>
+      <section class="settings-card" aria-labelledby="pet-size-heading">
+        <div class="settings-heading">
+          <h2 id="pet-size-heading">宠物大小</h2>
+          <output class="settings-value" for="pet-scale">100%</output>
+        </div>
+        <input
+          class="settings-range"
+          id="pet-scale"
+          type="range"
+          min="60"
+          max="160"
+          step="5"
+          value="100"
+          aria-label="宠物大小"
+        />
+        <div class="settings-range-labels" aria-hidden="true"><span>60%</span><span>160%</span></div>
+      </section>
+      <section class="settings-card" aria-labelledby="pet-role-heading">
+        <div class="settings-heading">
+          <h2 id="pet-role-heading">宠物角色：</h2>
+        </div>
+        <div class="settings-role-options" role="group" aria-labelledby="pet-role-heading">
+          <button class="settings-role-option" type="button" data-pet-role="deepseek">DeepSeek鲸鱼娘</button>
+          <button class="settings-role-option" type="button" data-pet-role="taffy">永雏塔菲</button>
+          <button class="settings-role-option" type="button" data-pet-role="rym">若叶睦</button>
+        </div>
+      </section>
+    </main>
+  `;
+
+  const range = root.querySelector<HTMLInputElement>("#pet-scale");
+  const value = root.querySelector<HTMLOutputElement>(".settings-value");
+  if (!range || !value) return;
+
+  const renderValue = (percentage: number): void => {
+    value.value = `${percentage}%`;
+    value.textContent = `${percentage}%`;
+  };
+  const applyScale = async (): Promise<void> => {
+    const percentage = Number(range.value);
+    renderValue(percentage);
+    if (!isTauri()) return;
+    try {
+      const applied = await setPetScale(percentage / 100);
+      const appliedPercentage = Math.round(applied * 100);
+      range.value = String(appliedPercentage);
+      renderValue(appliedPercentage);
+    } catch (error) {
+      console.error("Unable to update pet scale.", error);
+    }
+  };
+
+  range.addEventListener("input", () => void applyScale());
+  if (isTauri()) {
+    void getPetScale()
+      .then((scale) => {
+        const percentage = Math.round(scale * 100);
+        range.value = String(percentage);
+        renderValue(percentage);
+      })
+      .catch((error) => console.error("Unable to load pet scale.", error));
+  }
+
+  const roleButtons = root.querySelectorAll<HTMLButtonElement>("[data-pet-role]");
+  const selectRole = (role: string): void => {
+    roleButtons.forEach((button) => {
+      const selected = button.dataset.petRole === role;
+      button.classList.toggle("is-selected", selected);
+      button.setAttribute("aria-pressed", String(selected));
+    });
+  };
+  roleButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const role = button.dataset.petRole;
+      if (!role || !isTauri()) return;
+      void setPetRole(role)
+        .then(selectRole)
+        .catch((error) => console.error("Unable to update pet role.", error));
+    });
+  });
+  if (isTauri()) {
+    void getPetRole()
+      .then(selectRole)
+      .catch((error) => console.error("Unable to load pet role.", error));
+  } else {
+    selectRole("deepseek");
+  }
+}
+
 const root = document.querySelector<HTMLElement>("#app");
 if (!root) throw new Error("Missing #app root element");
 
-if (currentView() === "bubble") {
+if (currentView() === "settings") {
+  renderSettings(root);
+} else if (currentView() === "bubble") {
   renderBubble(root);
 } else {
   renderPet(root);

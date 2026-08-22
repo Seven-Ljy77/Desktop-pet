@@ -17,10 +17,6 @@
         "url": "index.html?view=pet",
         "width": 288,
         "height": 204,
-        "minWidth": 288,
-        "minHeight": 204,
-        "maxWidth": 288,
-        "maxHeight": 204,
         "resizable": false,
         "maximizable": false,
         "minimizable": false,
@@ -51,6 +47,18 @@
         "skipTaskbar": true,
         "focus": false,
         "visible": false
+      },
+      {
+        "label": "settings",
+        "title": "Desktop Pet 设置",
+        "url": "index.html?view=settings",
+        "width": 360,
+        "height": 420,
+        "resizable": false,
+        "maximizable": false,
+        "minimizable": false,
+        "center": true,
+        "visible": false
       }
     ],
     "security": {
@@ -61,6 +69,19 @@
     "active": true,
     "targets": "all",
     "category": "Entertainment",
-    "shortDescription": "A small interactive desktop companion"
+    "shortDescription": "A small interactive desktop companion",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "uninstallerIcon": "icons/icon.ico"
+      }
+    }
   }
 }

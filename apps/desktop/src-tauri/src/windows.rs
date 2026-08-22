@@ -1,5 +1,20 @@
 use serde::{Deserialize, Serialize};
-use tauri::{Emitter, Manager, PhysicalPosition};
+use std::{fs, path::PathBuf};
+use tauri::{Emitter, LogicalSize, Manager, PhysicalPosition};
+
+// Anchor the bubble to the pet artwork's top-left corner. The bubble appears
+// above-left of the pet; edge clamping below only prevents it leaving a screen.
+const BUBBLE_OFFSET_X: i32 = -350;
+const BUBBLE_OFFSET_Y: i32 = -100;
+pub const DEFAULT_PET_SCALE: f64 = 1.0;
+pub const MIN_PET_SCALE: f64 = 0.6;
+pub const MAX_PET_SCALE: f64 = 1.6;
+
+const BASE_PET_WIDTH: f64 = 288.0;
+const BASE_PET_HEIGHT: f64 = 204.0;
+const PET_SCALE_FILE: &str = "pet-scale.txt";
+pub const DEFAULT_PET_ROLE: &str = "deepseek";
+const PET_ROLE_FILE: &str = "pet-role.txt";
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BubblePayload {
@@ -38,12 +53,11 @@ fn place_bubble(app: &tauri::AppHandle) -> Result<(), String> {
         .ok_or_else(|| "bubble window is not available".to_string())?;
 
     let pet_position = pet.outer_position().map_err(|error| error.to_string())?;
-    let pet_size = pet.outer_size().map_err(|error| error.to_string())?;
     let bubble_size = bubble.outer_size().map_err(|error| error.to_string())?;
     let monitor = pet.current_monitor().map_err(|error| error.to_string())?;
 
-    let mut x = pet_position.x - bubble_size.width as i32 + 43;
-    let mut y = pet_position.y + 6;
+    let mut x = pet_position.x + BUBBLE_OFFSET_X;
+    let mut y = pet_position.y + BUBBLE_OFFSET_Y;
 
     if let Some(monitor) = monitor {
         let work_area = monitor.work_area();
@@ -52,9 +66,6 @@ fn place_bubble(app: &tauri::AppHandle) -> Result<(), String> {
         let monitor_right = monitor_position.x + monitor_size.width as i32;
         let monitor_bottom = monitor_position.y + monitor_size.height as i32;
 
-        if x < monitor_position.x {
-            x = pet_position.x + pet_size.width as i32 - 43;
-        }
         x = x.clamp(
             monitor_position.x,
             monitor_right.saturating_sub(bubble_size.width as i32),
@@ -94,4 +105,100 @@ pub fn start_pet_drag(app: &tauri::AppHandle) -> Result<(), String> {
         .get_webview_window("pet")
         .ok_or_else(|| "pet window is not available".to_string())?;
     pet.start_dragging().map_err(|error| error.to_string())
+}
+
+pub fn normalize_pet_scale(scale: f64) -> Result<f64, String> {
+    if !scale.is_finite() {
+        return Err("pet scale must be a finite number".to_string());
+    }
+    Ok(scale.clamp(MIN_PET_SCALE, MAX_PET_SCALE))
+}
+
+fn pet_scale_path(app: &tauri::AppHandle) -> Option<PathBuf> {
+    app.path()
+        .app_data_dir()
+        .ok()
+        .map(|directory| directory.join(PET_SCALE_FILE))
+}
+
+pub fn load_pet_scale(app: &tauri::AppHandle) -> f64 {
+    pet_scale_path(app)
+        .and_then(|path| fs::read_to_string(path).ok())
+        .and_then(|value| value.trim().parse::<f64>().ok())
+        .and_then(|value| normalize_pet_scale(value).ok())
+        .unwrap_or(DEFAULT_PET_SCALE)
+}
+
+pub fn save_pet_scale(app: &tauri::AppHandle, scale: f64) -> Result<(), String> {
+    let path =
+        pet_scale_path(app).ok_or_else(|| "unable to locate app data directory".to_string())?;
+    let directory = path
+        .parent()
+        .ok_or_else(|| "unable to determine app data directory".to_string())?;
+    fs::create_dir_all(directory)
+        .map_err(|error| format!("unable to create app data directory: {error}"))?;
+    fs::write(path, scale.to_string()).map_err(|error| format!("unable to save pet scale: {error}"))
+}
+
+pub fn normalize_pet_role(role: &str) -> Result<&'static str, String> {
+    match role {
+        "deepseek" => Ok("deepseek"),
+        "taffy" => Ok("taffy"),
+        "rym" => Ok("rym"),
+        _ => Err("unknown pet role".to_string()),
+    }
+}
+
+fn pet_role_path(app: &tauri::AppHandle) -> Option<PathBuf> {
+    app.path()
+        .app_data_dir()
+        .ok()
+        .map(|directory| directory.join(PET_ROLE_FILE))
+}
+
+pub fn load_pet_role(app: &tauri::AppHandle) -> String {
+    pet_role_path(app)
+        .and_then(|path| fs::read_to_string(path).ok())
+        .and_then(|value| normalize_pet_role(value.trim()).ok())
+        .unwrap_or(DEFAULT_PET_ROLE)
+        .to_string()
+}
+
+pub fn save_pet_role(app: &tauri::AppHandle, role: &str) -> Result<(), String> {
+    let path =
+        pet_role_path(app).ok_or_else(|| "unable to locate app data directory".to_string())?;
+    let directory = path
+        .parent()
+        .ok_or_else(|| "unable to determine app data directory".to_string())?;
+    fs::create_dir_all(directory)
+        .map_err(|error| format!("unable to create app data directory: {error}"))?;
+    fs::write(path, role).map_err(|error| format!("unable to save pet role: {error}"))
+}
+
+pub fn apply_pet_scale(app: &tauri::AppHandle, scale: f64) -> Result<(), String> {
+    let scale = normalize_pet_scale(scale)?;
+    let pet = app
+        .get_webview_window("pet")
+        .ok_or_else(|| "pet window is not available".to_string())?;
+    let previous_position = pet.outer_position().map_err(|error| error.to_string())?;
+    let previous_size = pet.outer_size().map_err(|error| error.to_string())?;
+
+    pet.set_size(LogicalSize::new(
+        (BASE_PET_WIDTH * scale).round(),
+        (BASE_PET_HEIGHT * scale).round(),
+    ))
+    .map_err(|error| error.to_string())?;
+
+    let resized = pet.outer_size().map_err(|error| error.to_string())?;
+    let mut x = previous_position.x + previous_size.width as i32 - resized.width as i32;
+    let mut y = previous_position.y + previous_size.height as i32 - resized.height as i32;
+    if let Some(monitor) = pet.current_monitor().map_err(|error| error.to_string())? {
+        let work_area = monitor.work_area();
+        let right = work_area.position.x + work_area.size.width as i32 - resized.width as i32;
+        let bottom = work_area.position.y + work_area.size.height as i32 - resized.height as i32;
+        x = x.clamp(work_area.position.x, right);
+        y = y.clamp(work_area.position.y, bottom);
+    }
+    pet.set_position(PhysicalPosition::new(x, y))
+        .map_err(|error| error.to_string())
 }

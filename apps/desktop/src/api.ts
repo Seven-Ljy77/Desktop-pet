@@ -25,3 +25,19 @@ export async function startPetDrag(): Promise<void> {
   await invoke("start_pet_drag");
 }
 
+export async function getPetScale(): Promise<number> {
+  return invoke<number>("get_pet_scale");
+}
+
+export async function setPetScale(scale: number): Promise<number> {
+  return invoke<number>("set_pet_scale", { scale });
+}
+
+export async function getPetRole(): Promise<string> {
+  return invoke<string>("get_pet_role");
+}
+
+export async function setPetRole(role: string): Promise<string> {
+  return invoke<string>("set_pet_role", { role });
+}
+
