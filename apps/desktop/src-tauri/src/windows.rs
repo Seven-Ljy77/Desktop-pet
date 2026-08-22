@@ -1,6 +1,11 @@
 use serde::{Deserialize, Serialize};
 use tauri::{Emitter, Manager, PhysicalPosition};
 
+// Anchor the bubble to the pet artwork's top-left corner. The bubble appears
+// above-left of the pet; edge clamping below only prevents it leaving a screen.
+const BUBBLE_OFFSET_X: i32 = -350;
+const BUBBLE_OFFSET_Y: i32 = -100;
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BubblePayload {
     pub message: String,
@@ -38,12 +43,11 @@ fn place_bubble(app: &tauri::AppHandle) -> Result<(), String> {
         .ok_or_else(|| "bubble window is not available".to_string())?;
 
     let pet_position = pet.outer_position().map_err(|error| error.to_string())?;
-    let pet_size = pet.outer_size().map_err(|error| error.to_string())?;
     let bubble_size = bubble.outer_size().map_err(|error| error.to_string())?;
     let monitor = pet.current_monitor().map_err(|error| error.to_string())?;
 
-    let mut x = pet_position.x - bubble_size.width as i32 + 43;
-    let mut y = pet_position.y + 6;
+    let mut x = pet_position.x + BUBBLE_OFFSET_X;
+    let mut y = pet_position.y + BUBBLE_OFFSET_Y;
 
     if let Some(monitor) = monitor {
         let work_area = monitor.work_area();
@@ -52,9 +56,6 @@ fn place_bubble(app: &tauri::AppHandle) -> Result<(), String> {
         let monitor_right = monitor_position.x + monitor_size.width as i32;
         let monitor_bottom = monitor_position.y + monitor_size.height as i32;
 
-        if x < monitor_position.x {
-            x = pet_position.x + pet_size.width as i32 - 43;
-        }
         x = x.clamp(
             monitor_position.x,
             monitor_right.saturating_sub(bubble_size.width as i32),
