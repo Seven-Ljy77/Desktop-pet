@@ -8,9 +8,10 @@ pub fn create(app: &tauri::App) -> tauri::Result<()> {
     let show = MenuItem::with_id(app, "show", "显示宠物", true, None::<&str>)?;
     let hide = MenuItem::with_id(app, "hide", "隐藏宠物", true, None::<&str>)?;
     let reset = MenuItem::with_id(app, "reset", "重置位置", true, None::<&str>)?;
+    let settings = MenuItem::with_id(app, "settings", "设置", true, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(app)?;
     let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&show, &hide, &reset, &separator, &quit])?;
+    let menu = Menu::with_items(app, &[&show, &hide, &reset, &settings, &separator, &quit])?;
 
     let mut builder = TrayIconBuilder::with_id("desktop-pet")
         .tooltip("Desktop Pet")
@@ -31,6 +32,12 @@ pub fn create(app: &tauri::App) -> tauri::Result<()> {
             }
             "reset" => {
                 let _ = crate::windows::place_pet(app);
+            }
+            "settings" => {
+                if let Some(window) = app.get_webview_window("settings") {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
             }
             "quit" => app.exit(0),
             _ => {}

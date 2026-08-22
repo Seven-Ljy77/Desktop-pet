@@ -97,6 +97,96 @@ body[data-view="bubble"] {
   pointer-events: none;
 }
 
+body[data-view="settings"] {
+  background: #f3f7f5;
+}
+
+.settings-panel {
+  min-height: 100%;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 100% 0%, rgb(191 220 208 / 52%), transparent 45%),
+    #f7faf8;
+}
+
+.settings-panel h1,
+.settings-panel h2 {
+  margin: 0;
+  font-weight: 650;
+}
+
+.settings-panel h1 {
+  font-size: 20px;
+}
+
+.settings-card {
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid rgb(93 123 115 / 18%);
+  border-radius: 16px;
+  background: rgb(255 255 255 / 86%);
+  box-shadow: 0 8px 20px rgb(47 70 64 / 8%);
+}
+
+.settings-heading,
+.settings-range-labels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.settings-heading h2 {
+  font-size: 15px;
+}
+
+.settings-value {
+  color: #377464;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.settings-range {
+  width: 100%;
+  margin: 18px 0 7px;
+  accent-color: #4d927d;
+}
+
+.settings-range-labels {
+  color: #74827c;
+  font-size: 12px;
+}
+
+.settings-role-options {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.settings-role-option {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid rgb(93 123 115 / 20%);
+  border-radius: 10px;
+  background: rgb(255 255 255 / 72%);
+  color: #33433e;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out;
+}
+
+.settings-role-option:hover {
+  border-color: rgb(77 146 125 / 55%);
+}
+
+.settings-role-option.is-selected {
+  border-color: #4d927d;
+  background: #e1f0ea;
+  color: #1f5e4e;
+  font-weight: 700;
+}
+
 .speech-bubble {
   position: absolute;
   inset: 8px 11px 19px 8px;
