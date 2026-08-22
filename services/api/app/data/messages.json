@@ -1,24 +1,17 @@
 [
   {
-    "message": "忙了一阵啦，要不要伸个懒腰？",
+    "message": "我是你爹喵",
     "emotion": "caring",
     "animation": "nod",
     "display_ms": 4500,
     "cooldown_ms": 10000
   },
   {
-    "message": "我刚刚想到一个好点子，不过先保密。",
-    "emotion": "playful",
-    "animation": "bounce",
-    "display_ms": 5000,
-    "cooldown_ms": 12000
-  },
-  {
-    "message": "今天也在认真前进呢。",
-    "emotion": "happy",
-    "animation": "wave",
-    "display_ms": 4000,
-    "cooldown_ms": 9000
+    "message": "关注塔菲喵，关注塔菲谢谢喵",
+    "emotion": "caring",
+    "animation": "nod",
+    "display_ms": 4500,
+    "cooldown_ms": 10000
   }
 ]
 
