@@ -1,4 +1,4 @@
-{$PET_DOMAIN} {
+api.desktop-pet.cn {
 	encode zstd gzip
 
 	header {
@@ -19,4 +19,7 @@
 		output stdout
 		format console
 	}
+}
+notes.desktop-pet.cn {
+	reverse_proxy /api/* fastapi:8000
 }

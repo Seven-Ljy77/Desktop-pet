@@ -34,7 +34,15 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+    networks:
+      - default
+      - notes
 
 volumes:
   caddy_data:
   caddy_config:
+
+networks:
+  notes:
+    external: true
+    name: personal-note-library_default
